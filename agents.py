@@ -178,18 +178,48 @@ def calculate_observation_probability(valid_positions,s, o, true_prob):
     #TODO: Implement the sensor model P(O_t | X_t) for the ghost
     #s = ghost state, o = observation
     #true_prob is the probability of the sensor yielding an accurate reading
-    #should return a single probability value of the sensor reading given the ghost's position    
-    pass
+    #should return a single probability value of the sensor reading given the ghost's position ~
+    # P(O_t | X_t) = P(sensor reading | ghost position)
+    # if the ghost is at position s and the sensor reading o is correct (i.e., matches the ghost's position), then the probability is true_prob.
+    # if the ghost is at position s and the sensor reading o is incorrect (i.e., does not match the ghost's position), then the probability is (1 - true_prob) 
+    # divided by the number of incorrect readings (which is the total number of valid positions minus one).
+    # P(O_t | X_t) = true_prob if s corresponds to o, else (1 - true_prob) / (number of valid positions - 1)
+    # Hint: you can use the valid_positions list to determine the total number of possible sensor readings and to check if the observation matches
+    # the ghost's position.
+
+
+    pos = valid_positions[s]
+    if pos == o:
+        return true_prob
+    return (1 - true_prob) / (len(valid_positions) - 1)
+
 
 def bayesian_filter(observation, model):
     #TODO: Implement the Bayesian filter to update the belief vector.
     
-    #1. PREDICTION: Compute the belief using transition model
+    #1. PREDICTION: Compute the belief using transition model below
+    # the prediction step should use the transition matrix to compute the predicted belief at time t+1 based on the belief at time t
+    # and the ghost's movement model. This can be done using a matrix multiplication between the transition matrix and the belief vector.
+    # predicted_belief = T^T * belief (where T^T is the transpose of the transition matrix)
+    # Note: make sure to use the correct dimensions for the matrix multiplication (the transition matrix should be of size (num_states, num_states) 
+    # and the belief vector should be of size (num_states,))
+    predicted_belief = np.dot(model['transition_matrix'].T, model['belief'])
 
     #2. UPDATE: Incorporate evidence using observation model
+    # the update step should use the observation matrix to compute the likelihood of the observation given each possible ghost position, and then multiply this element-wise with the predicted belief to get the updated belief.
+    # updated_belief[s] = P(O_t | X_t = s) * predicted_belief[s] for each state s
+    # this can be done using an element-wise multiplication between the observation probabilities for the given observation and the predicted belief vector.
+    # Note: the observation matrix should be of size (num_observations, num_states) and you should select the row corresponding to the actual observation to get the likelihoods for each state.
+    observation_probabilities = model['observation_matrix'][observation]
+    updated_belief = observation_probabilities * predicted_belief
+
     
     #3. NORMALIZATION: Ensure the belief map is a probability distribution
-    pass
+    # after the update step, the belief vector may not sum to 1, so we need to normalize it to ensure it represents a valid probability distribution.
+    # this can be done by dividing the updated belief vector by the sum of its elements.
+    updated_belief = updated_belief / np.sum(updated_belief)
+    model['belief'] = updated_belief
+
 
 def pacmanHMM(game_state):
     if game_state['pacman']['model'] is None:
@@ -203,15 +233,36 @@ def pacmanHMM(game_state):
         model['belief'] = np.full(model['num_states'], 1.0/model['num_states']) #1D initial state distribution.
 
         #1.Define the Transition Matrix (T) - models the probability of moving from one state to any other state
+        # for simplicity, we will assume that the ghost can only move to adjacent cells (including diagonals) and that it moves uniformly at random to one
+        # of the valid neighbouring cells
+        # the transition matrix should be of size (num_states, num_states) where each entry T[s][s'] = P(X_{t+1} = s' | X_t = s) is the probability of 
+        # transitioning from state s to state s' according to the ghost's movement model
+        transition_matrix = np.zeros((model['num_states'], model['num_states']))
+        for s in range(model['num_states']):
+            neighbours = get_neighbours(s, game_state['valid_positions'])
+            for n in neighbours:
+                transition_matrix[s][n] = 1/len(neighbours)
+        model['transition_matrix'] = transition_matrix
+
         
         #2.Define the observation Matrix (E) - models the likelihood of sensor readings given the ghost's position
+        # use the calculate_observation_probability function to fill in the observation matrix based on the sensor model and the ghost_true_prob 
+        # parameter from the game state
+        # the observation matrix should be of size (num_observations, num_states) where each entry E[o][s] = P(O_t = o | X_t = s)   
+
+        observation_matrix = np.zeros((model['num_observations'], model['num_states']))
+        for o in range(model['num_observations']):
+            for s in range(model['num_states']):
+                observation_matrix[o][s] = calculate_observation_probability(game_state['valid_positions'], s, game_state['valid_positions'][o], game_state['pacman']['ghost_true_prob'])
+        model['observation_matrix'] = observation_matrix
+           
         
         ##visualisation
         if game_engine.VISUALISE:
             plt.close('all')
             plt.ion()
             fig, ax = plt.subplots()
-            cax = ax.imshow(vector_to_matrix(model['belief'], game_state['grid_size'], game_state['valid_positions']), cmap='hot', interpolation='nearest')
+            cax = ax.imshow(vector_to_matrix(model['belief'], game_state['grid_size'], game_state['valid_positions']), cmap='hot', interpolation='nearest', vmin=0, vmax=1)
             plt.colorbar(cax, label='Probability')
             ax.set_title('Ghost Belief')
             plt.pause(0.001)
@@ -231,8 +282,16 @@ def pacmanHMM(game_state):
         visualise_belief(vector_to_matrix(game_state['pacman']['model']['belief'], game_state['grid_size'], game_state['valid_positions']), game_state['pacman']['model']['cax'])
 
     #TODO: Use the updated belief in a reactive agent to move Pac-Man
-    #replace this line by your own implementation    
-    random_walk(game_state['pacman'], game_state)
+    #replace this line by your own implementation   
+    # for a simple reactive agent, you can compute the most likely position of the ghost based on the belief
+    #  (i.e., the state with the highest probability) and then move in the direction that maximizes the distance from that position.
+    most_likely_ghost_pos_index = np.argmax(game_state['pacman']['model']['belief'])
+    most_likely_ghost_pos = game_state['valid_positions'][most_likely_ghost_pos_index]
+    ghost = {'x': most_likely_ghost_pos[0], 'y': most_likely_ghost_pos[1]}
+    game_state['pacman']['ghost_position'] = ghost  
+
+
+    #random_walk(game_state['pacman'], game_state)
             
             
 
