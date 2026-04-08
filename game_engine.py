@@ -11,7 +11,7 @@ WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 FPS = 0
 VISUALISE = True
 
-SCARED_GHOST_TIME = 10 #seconds
+SCARED_GHOST_STEPS = 100 #steps
 PACMAN_CONTINUOUS_MOTION = True
 RESPAWN_GHOSTS = True
 PACMAN_GHOST_RANGE = 3
@@ -223,7 +223,7 @@ def update_world(game_state):
         grid[pacman_pos[1]][pacman_pos[0]] = EMPTY
         check_won(game_state)
         game_state['score'] += 5
-        game_state['scared_ghosts_timestamp'] = time.time()
+        game_state['scared_ghosts_steps'] = SCARED_GHOST_STEPS
         for ghost in game_state['ghosts']:
             ghost['scared'] = True
 
@@ -234,8 +234,8 @@ def update_world(game_state):
             else:
                 pacman_eaten(game_state)
                 break
-    
-    if time.time() - game_state['scared_ghosts_timestamp'] > SCARED_GHOST_TIME:
+    game_state['scared_ghosts_steps']-=1
+    if game_state['scared_ghosts_steps'] <= 0:
         for ghost in game_state['ghosts']:
             ghost['scared'] = False
 
@@ -291,7 +291,7 @@ def main(pacman_policy, ghost_policies, frightened_ghost_policies, map_file = "o
     
     pacman['previous_direction'] = pacman['direction'] = 'right'  # Initial movement direction
     game_state = {'pacman':pacman, 'ghosts':ghosts, 'grid':grid, 'grid_size':grid_size, 'cell_size':cell_size, 'score':0, 'scared_ghosts':0,
-                  'running':True, 'scared_ghosts_timestamp':0, 'won':False}
+                  'running':True, 'scared_ghosts_timestamp':0, 'won':False, 'scared_ghosts_steps':0}
     game_state['images'] = load_images(cell_size)
     
     game_state['valid_positions'] = []
@@ -324,6 +324,7 @@ def main(pacman_policy, ghost_policies, frightened_ghost_policies, map_file = "o
                 else:
                     ghost_policies[i](ghost, game_state)
                 move_agent(ghost, game_state['grid'])
+        check_collisions(pacman, ghosts, game_state)
             
         update_world(game_state)
         screen.fill(BLACK)

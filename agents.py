@@ -162,7 +162,8 @@ def get_neighbours(s, valid_positions):
 def visualise_belief(belief, cax):
     #Display a single, dynamically updating heatmap of a belief distribution.
     cax.set_data(belief)
-    plt.draw()
+    cax.figure.canvas.draw()
+    cax.figure.canvas.flush_events()
         
 def vector_to_matrix(belief, grid_size, valid_positions):
     #Convert a 1D belief vector into a 2D matrix for visualization.
@@ -207,11 +208,13 @@ def pacmanHMM(game_state):
         
         ##visualisation
         if game_engine.VISUALISE:
+            plt.close('all')
             plt.ion()
             fig, ax = plt.subplots()
             cax = ax.imshow(vector_to_matrix(model['belief'], game_state['grid_size'], game_state['valid_positions']), cmap='hot', interpolation='nearest')
             plt.colorbar(cax, label='Probability')
             ax.set_title('Ghost Belief')
+            plt.pause(0.001)
             model['fig'] = fig
             model['ax'] = ax
             model['cax'] = cax
