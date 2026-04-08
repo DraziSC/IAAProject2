@@ -205,7 +205,7 @@ def bayesian_filter(observation, model):
     #  vector.
     # predicted_belief = T^T * belief (where T^T is the transpose of the transition matrix)
     # Note: make sure to use the correct dimensions for the matrix multiplication (the transition matrix should be of size (num_states, num_states) 
-    # and the belief vector should be of size (num_states,))
+    # and the belief vector should be of size (num_states)
     predicted_belief = np.dot(model['transition_matrix'].T, model['belief'])
 
     #2. UPDATE: Incorporate evidence using observation model
@@ -226,6 +226,7 @@ def bayesian_filter(observation, model):
 def pacman_reactive_agent_no_random_legal(game_state):
     # Copy of pacman_reactive_agent_no_random, but legal directions use wall perceptions.
     pacman = game_state['pacman']
+    opposite_dir = None
 
     # Determine opposite direction for later use in avoiding reversals.
     if pacman['direction'] == 'up':
@@ -250,16 +251,29 @@ def pacman_reactive_agent_no_random_legal(game_state):
     elif pacman_perceptions.dot_right(game_state,2) and not pacman_perceptions.wall_right(game_state):
         game_state['pacman']['direction'] = 'right'
         #print("Moving right towards food")
-    # If no ghost or food perceived, just pick the first legal direction based on wall perceptions.
+    # If no ghost or food perceived, choose among legal moves to avoid fixed local loops.
     else:
+        legal_dirs = []
         if not pacman_perceptions.wall_up(game_state) and opposite_dir != 'up':
-            game_state['pacman']['direction'] = 'up'
-        elif not pacman_perceptions.wall_down(game_state) and opposite_dir != 'down':
-            game_state['pacman']['direction'] = 'down'  
-        elif not pacman_perceptions.wall_left(game_state) and opposite_dir != 'left':
-            game_state['pacman']['direction'] = 'left'
-        elif not pacman_perceptions.wall_right(game_state) and opposite_dir != 'right':
-            game_state['pacman']['direction'] = 'right'
+            legal_dirs.append('up')
+        if not pacman_perceptions.wall_down(game_state) and opposite_dir != 'down':
+            legal_dirs.append('down')
+        if not pacman_perceptions.wall_left(game_state) and opposite_dir != 'left':
+            legal_dirs.append('left')
+        if not pacman_perceptions.wall_right(game_state) and opposite_dir != 'right':
+            legal_dirs.append('right')
+
+        if legal_dirs:
+            # Prefer to keep moving straight to reduce jitter at intersections.
+            if pacman['direction'] in legal_dirs:
+                game_state['pacman']['direction'] = pacman['direction']
+            else:
+                # Otherwise, just pick the first legal direction based on wall perceptions.
+                game_state['pacman']['direction'] = legal_dirs[0]
+        elif opposite_dir is not None:
+            # Dead-end fallback: allow reversing if it is the only move.
+            game_state['pacman']['direction'] = opposite_dir
+            
 
 def pacman_reactive_agent_no_random_legal_chaseghosts(game_state):
     # Copy of above but now chase ghosts as well 
@@ -321,6 +335,8 @@ def pacmanHMM(game_state):
         
         #define the belief vector. To simplify, we will use a 1D vector of size num_states 
         #(i.e., the flattened grid of cells with no obstacles)
+        # each entry belief[s] represents the probability that the ghost is in the cell corresponding to state s, given the evidence received so far.
+        # the belief should be initialised to a uniform distribution at the start of the game, since we have no information about the ghost's position.
         model['belief'] = np.full(model['num_states'], 1.0/model['num_states']) #1D initial state distribution.
 
         #1.Define the Transition Matrix (T) - models the probability of moving from one state to any other state
@@ -388,6 +404,7 @@ def pacmanHMM(game_state):
     # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
     if distance > 5:
         #random_walk(game_state['pacman'], game_state)
+        #print("Pacman is far from the most likely ghost position.")
         pacman_reactive_agent_no_random_legal(game_state)
         #pacman_reactive_agent_no_random_legal_chaseghosts(game_state)
     else:
