@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     #---TP2---
     map_file='maps/originalClassic-single-ghost.txt'
-    ghost_true_prob = 0.2 # probability of the ghost sensor yielding an accurate reading
+    ghost_true_prob = 0.8 # probability of the ghost sensor yielding an accurate reading
     n_experiments = 10
     
     score = np.zeros(n_experiments)

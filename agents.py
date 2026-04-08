@@ -1,3 +1,5 @@
+from turtle import left, right
+
 import game_engine
 import pygame
 import pacman_perceptions
@@ -199,7 +201,8 @@ def bayesian_filter(observation, model):
     
     #1. PREDICTION: Compute the belief using transition model below
     # the prediction step should use the transition matrix to compute the predicted belief at time t+1 based on the belief at time t
-    # and the ghost's movement model. This can be done using a matrix multiplication between the transition matrix and the belief vector.
+    # and the ghost's movement model. This can be done using a matrix multiplication between the transition matrix and the belief
+    #  vector.
     # predicted_belief = T^T * belief (where T^T is the transpose of the transition matrix)
     # Note: make sure to use the correct dimensions for the matrix multiplication (the transition matrix should be of size (num_states, num_states) 
     # and the belief vector should be of size (num_states,))
@@ -220,6 +223,94 @@ def bayesian_filter(observation, model):
     updated_belief = updated_belief / np.sum(updated_belief)
     model['belief'] = updated_belief
 
+def pacman_reactive_agent_no_random_legal(game_state):
+    # Copy of pacman_reactive_agent_no_random, but legal directions use wall perceptions.
+    pacman = game_state['pacman']
+
+    # Determine opposite direction for later use in avoiding reversals.
+    if pacman['direction'] == 'up':
+        opposite_dir = 'down'
+    elif pacman['direction'] == 'down':
+        opposite_dir = 'up'
+    elif pacman['direction'] == 'left':
+        opposite_dir = 'right'
+    elif pacman['direction'] == 'right':
+        opposite_dir = 'left'
+
+    # food food food
+    if pacman_perceptions.dot_up(game_state,2) and not pacman_perceptions.wall_up(game_state):
+        game_state['pacman']['direction'] = 'up'
+        #print("Moving up towards food")
+    elif pacman_perceptions.dot_down(game_state,2) and not pacman_perceptions.wall_down(game_state):
+        game_state['pacman']['direction'] = 'down'
+        #print("Moving down towards food")
+    elif pacman_perceptions.dot_left(game_state,2) and not pacman_perceptions.wall_left(game_state):
+        game_state['pacman']['direction'] = 'left'
+        #print("Moving left towards food")
+    elif pacman_perceptions.dot_right(game_state,2) and not pacman_perceptions.wall_right(game_state):
+        game_state['pacman']['direction'] = 'right'
+        #print("Moving right towards food")
+    # If no ghost or food perceived, just pick the first legal direction based on wall perceptions.
+    else:
+        if not pacman_perceptions.wall_up(game_state) and opposite_dir != 'up':
+            game_state['pacman']['direction'] = 'up'
+        elif not pacman_perceptions.wall_down(game_state) and opposite_dir != 'down':
+            game_state['pacman']['direction'] = 'down'  
+        elif not pacman_perceptions.wall_left(game_state) and opposite_dir != 'left':
+            game_state['pacman']['direction'] = 'left'
+        elif not pacman_perceptions.wall_right(game_state) and opposite_dir != 'right':
+            game_state['pacman']['direction'] = 'right'
+
+def pacman_reactive_agent_no_random_legal_chaseghosts(game_state):
+    # Copy of above but now chase ghosts as well 
+    # Also adds some range values for food and ghost perception to try to chase them from further away, 
+    # which can be tuned for better performance i.e. win vs score.
+    pacman = game_state['pacman']
+    
+    activeghost_detection_range = 3 # How far to check for active (non-frightened) ghosts.
+    #frightenedghost_detection_range = 5 # How far to check for frightened ghosts. Set higher than active ghost range to try to chase them from further away.
+    food_detection_range = 10 # How far to check for food. Set higher than ghost ranges to try to chase food from further away.
+    
+    if pacman['direction'] == 'up':
+        opposite_dir = 'down'
+    elif pacman['direction'] == 'down':
+        opposite_dir = 'up'
+    elif pacman['direction'] == 'left':
+        opposite_dir = 'right'
+    elif pacman['direction'] == 'right':
+        opposite_dir = 'left'
+
+    if(pacman_perceptions.ghost_frightened(game_state) and not pacman_perceptions.wall_up(game_state)):
+        game_state['pacman']['direction'] = 'up'
+    elif(pacman_perceptions.ghost_frightened(game_state) and not pacman_perceptions.wall_down(game_state)):
+        game_state['pacman']['direction'] = 'down'
+    elif(pacman_perceptions.ghost_frightened(game_state) and not pacman_perceptions.wall_left(game_state)):
+        game_state['pacman']['direction'] = 'left'
+    elif(pacman_perceptions.ghost_frightened(game_state) and not pacman_perceptions.wall_right(game_state)):
+        game_state['pacman']['direction'] = 'right'
+    else:
+        if pacman_perceptions.dot_up(game_state,food_detection_range) and not pacman_perceptions.wall_up(game_state):
+            game_state['pacman']['direction'] = 'up'
+            #print("Moving up towards food")
+        elif pacman_perceptions.dot_down(game_state,food_detection_range) and not pacman_perceptions.wall_down(game_state):
+            game_state['pacman']['direction'] = 'down'
+            #print("Moving down towards food")
+        elif pacman_perceptions.dot_left(game_state,food_detection_range) and not pacman_perceptions.wall_left(game_state):
+            game_state['pacman']['direction'] = 'left'
+            #print("Moving left towards food")
+        elif pacman_perceptions.dot_right(game_state,food_detection_range) and not pacman_perceptions.wall_right(game_state):
+            game_state['pacman']['direction'] = 'right'
+            #print("Moving right towards food")
+        # If no ghost or food perceived, just pick the first legal direction based on wall perceptions.
+        else:
+            if not pacman_perceptions.wall_up(game_state) and opposite_dir != 'up':
+                game_state['pacman']['direction'] = 'up'
+            elif not pacman_perceptions.wall_down(game_state) and opposite_dir != 'down':
+                game_state['pacman']['direction'] = 'down'
+            elif not pacman_perceptions.wall_left(game_state) and opposite_dir != 'left':
+                game_state['pacman']['direction'] = 'left'
+            elif not pacman_perceptions.wall_right(game_state) and opposite_dir != 'right':
+                game_state['pacman']['direction'] = 'right'
 
 def pacmanHMM(game_state):
     if game_state['pacman']['model'] is None:
@@ -288,7 +379,45 @@ def pacmanHMM(game_state):
     most_likely_ghost_pos_index = np.argmax(game_state['pacman']['model']['belief'])
     most_likely_ghost_pos = game_state['valid_positions'][most_likely_ghost_pos_index]
     ghost = {'x': most_likely_ghost_pos[0], 'y': most_likely_ghost_pos[1]}
-    game_state['pacman']['ghost_position'] = ghost  
+    #game_state['pacman']['ghost_position'] = ghost  
+
+    # get pacman's current position from game-state coordinates
+    pacman_pos = (game_state['pacman']['x'], game_state['pacman']['y'])
+    # check distance between pacman and the most likely ghost position
+    distance = game_engine.manhattan_distance(pacman_pos, most_likely_ghost_pos)
+    # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
+    if distance > 5:
+        #random_walk(game_state['pacman'], game_state)
+        pacman_reactive_agent_no_random_legal(game_state)
+        #pacman_reactive_agent_no_random_legal_chaseghosts(game_state)
+    else:
+        # Using only perceptions move in the direction that increases the distance from the most likely ghost position. 
+        # You cannot use the get_valid_directions or compute_new_pos functions from the game engine.
+        # if ghost_frightened move towards ghost instead of away, using the same logic but in reverse (i.e., move in the direction that minimizes the distance to the ghost).
+        if pacman_perceptions.ghost_frightened(game_state):
+            if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
+                game_state['pacman']['direction'] = 'left'  
+            elif most_likely_ghost_pos[0] > pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
+                game_state['pacman']['direction'] = 'right'
+            elif most_likely_ghost_pos[1] < pacman_pos[1] and not pacman_perceptions.wall_up(game_state):
+                game_state['pacman']['direction'] = 'up'
+            elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_down(game_state):
+                game_state['pacman']['direction'] = 'down'
+            else:
+                random_walk(game_state['pacman'], game_state)
+        else:
+            if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
+                game_state['pacman']['direction'] = 'right'
+            elif most_likely_ghost_pos[0] > pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
+                game_state['pacman']['direction'] = 'left'
+            elif most_likely_ghost_pos[1] < pacman_pos[1] and not pacman_perceptions.wall_down(game_state):
+                game_state['pacman']['direction'] = 'down'
+            elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_up(game_state):
+                game_state['pacman']['direction'] = 'up'
+            else:
+                random_walk(game_state['pacman'], game_state)
+
+        
 
 
     #random_walk(game_state['pacman'], game_state)
