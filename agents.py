@@ -286,7 +286,10 @@ def pacman_reactive_agent_no_random_legal(game_state):
                 #game_state['pacman']['direction'] = legal_dirs[0]
                 # choose a random legal direction instead to add some variability and help break out of local loops, but only if the current direction is not legal (to avoid jittering at intersections)
                 #print(f"Choosing random legal direction: {legal_dirs}")
-                game_state['pacman']['direction'] = random.choice(legal_dirs)
+                #game_state['pacman']['direction'] = random.choice(legal_dirs)
+                #instead of using random use the last element in legal_dirs to have a more deterministic behaviour, which can be useful for debugging and understanding the agent's decisions, and still allows for variability when there are multiple legal directions.
+                game_state['pacman']['direction'] = legal_dirs[-1]
+                #print(f"Choosing reverse legal direction: {legal_dirs[-1]}")
         elif opposite_dir is not None:
             # Dead-end fallback: allow reversing if it is the only move.
             game_state['pacman']['direction'] = opposite_dir
