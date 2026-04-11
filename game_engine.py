@@ -338,7 +338,7 @@ def main(pacman_policy, ghost_policies, frightened_ghost_policies, map_file = "o
     else:
         print("Game Over! Score:", game_state['score'])
     pygame.quit()
-    return game_state['score']
+    return game_state['score'], game_state['won']
     
 def set_pacman_direction(game_state,dir, observations, fname):
     pacman = game_state['pacman']
