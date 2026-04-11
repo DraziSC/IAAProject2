@@ -1,3 +1,4 @@
+from pyexpat import model
 from turtle import left, right
 
 import game_engine
@@ -166,6 +167,19 @@ def visualise_belief(belief, cax):
     cax.set_data(belief)
     cax.figure.canvas.draw()
     cax.figure.canvas.flush_events()
+    
+def visualise_belief_number(belief_n,cax_n):
+    cax_n.clear() #clear the previous text annotations and prevents old frames from stacking on top of new ones
+    cax_n.imshow(belief_n, cmap='hot', interpolation='bicubic', vmin=0, vmax=1)
+    rows, cols = belief_n.shape
+    for y in range(rows):
+        for x in range(cols):
+            if belief_n[y][x] > 0:
+                cax_n.text(x, y, f"{belief_n[y][x]:.2f}", ha='center', va='center', color='white', fontsize=7)
+
+    cax_n.set_title('Ghost Belief in Numbers')
+    cax_n.figure.canvas.draw()
+    cax_n.figure.canvas.flush_events()   
         
 def vector_to_matrix(belief, grid_size, valid_positions):
     #Convert a 1D belief vector into a 2D matrix for visualization.
@@ -363,7 +377,8 @@ def pacmanHMM(game_state):
                 observation_matrix[o][s] = calculate_observation_probability(game_state['valid_positions'], s, game_state['valid_positions'][o], game_state['pacman']['ghost_true_prob'])
         model['observation_matrix'] = observation_matrix
            
-        
+        model['step_count'] = 0
+
         ##visualisation
         if game_engine.VISUALISE:
             plt.close('all')
@@ -377,6 +392,17 @@ def pacmanHMM(game_state):
             model['ax'] = ax
             model['cax'] = cax
             
+            '''
+            fig_n, ax_n = plt.subplots()
+            cax_n = ax_n.imshow(vector_to_matrix(model['belief'], game_state['grid_size'], game_state['valid_positions']), cmap='hot', interpolation='bicubic', vmin=0, vmax=1)
+            plt.colorbar(cax_n, label='Probability')
+            ax_n.set_title('Ghost Belief in Numbers')
+            plt.pause(0.001)
+            model['fig_n'] = fig_n
+            model['ax_n'] = ax_n
+            model['cax_n'] = cax_n
+            '''        
+            
         game_state['pacman']['model'] = model    
 
     #get the noisy ghost observation
@@ -385,9 +411,19 @@ def pacmanHMM(game_state):
     #apply the bayesian filter to update the belief
     bayesian_filter(observation, game_state['pacman']['model'])
 
+    game_state['pacman']['model']['step_count'] += 1
+
     if game_engine.VISUALISE:
         visualise_belief(vector_to_matrix(game_state['pacman']['model']['belief'], game_state['grid_size'], game_state['valid_positions']), game_state['pacman']['model']['cax'])
-
+    
+    if game_engine.VISUALISE and game_state['pacman']['model']['step_count'] == 100:  
+        fig_n, ax_n = plt.subplots()
+        game_state['pacman']['model']['fig_n'] = fig_n
+        game_state['pacman']['model']['ax_n'] = ax_n
+    if game_engine.VISUALISE and game_state['pacman']['model']['step_count'] % 100 == 0 and 'ax_n' in game_state['pacman']['model']:    
+        visualise_belief_number(vector_to_matrix(game_state['pacman']['model']['belief'],game_state['grid_size'],game_state['valid_positions']),game_state['pacman']['model']['ax_n'])
+        
+        
     #TODO: Use the updated belief in a reactive agent to move Pac-Man
     #replace this line by your own implementation   
     # for a simple reactive agent, you can compute the most likely position of the ghost based on the belief
@@ -421,7 +457,9 @@ def pacmanHMM(game_state):
             elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_down(game_state):
                 game_state['pacman']['direction'] = 'down'
             else:
-                random_walk(game_state['pacman'], game_state)
+                #random_walk(game_state['pacman'], game_state)
+                pacman_reactive_agent_no_random_legal(game_state)
+                
         else:
             if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
                 game_state['pacman']['direction'] = 'right'
@@ -432,7 +470,8 @@ def pacmanHMM(game_state):
             elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_up(game_state):
                 game_state['pacman']['direction'] = 'up'
             else:
-                random_walk(game_state['pacman'], game_state)
+                #random_walk(game_state['pacman'], game_state)
+                pacman_reactive_agent_no_random_legal(game_state)
 
         
 
