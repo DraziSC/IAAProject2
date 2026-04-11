@@ -112,3 +112,14 @@ def noisy_ghost_position_sensor(game_state, ind_ghost, prob):
         candidates = game_state['valid_positions'][:]
         candidates.remove((game_state['ghosts'][ind_ghost]['x'], game_state['ghosts'][ind_ghost]['y']))
         return random.choice(candidates)
+    
+
+def pacman_distance_to_ghost(game_state, most_likely_ghost_pos):
+    pacman = game_state['pacman']
+    
+    pacman_pos = (game_state['pacman']['x'], game_state['pacman']['y'])
+
+    # check distance between pacman and the most likely ghost position
+    distance = game_engine.manhattan_distance(pacman_pos, most_likely_ghost_pos)
+
+    return distance

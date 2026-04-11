@@ -444,7 +444,9 @@ def pacmanHMM(game_state):
     pacman = game_state['pacman']
 
     # check distance between pacman and the most likely ghost position
-    distance = game_engine.manhattan_distance(pacman_pos, most_likely_ghost_pos)
+    # use new perception to get distance 
+    distance = pacman_perceptions.pacman_distance_to_ghost(game_state, most_likely_ghost_pos)
+
     # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
     if distance > 5 or game_state['pacman']['model']['chasefoodonly'] > 0: # if the ghost is far away, move towards food (if we have not eaten in a while) or randomly (if we have eaten recently), to break out of local loops.
         #random_walk(game_state['pacman'], game_state)
