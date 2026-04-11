@@ -283,7 +283,10 @@ def pacman_reactive_agent_no_random_legal(game_state):
                 game_state['pacman']['direction'] = pacman['direction']
             else:
                 # Otherwise, just pick the first legal direction based on wall perceptions.
-                game_state['pacman']['direction'] = legal_dirs[0]
+                #game_state['pacman']['direction'] = legal_dirs[0]
+                # choose a random legal direction instead to add some variability and help break out of local loops, but only if the current direction is not legal (to avoid jittering at intersections)
+                #print(f"Choosing random legal direction: {legal_dirs}")
+                game_state['pacman']['direction'] = random.choice(legal_dirs)
         elif opposite_dir is not None:
             # Dead-end fallback: allow reversing if it is the only move.
             game_state['pacman']['direction'] = opposite_dir
@@ -378,6 +381,9 @@ def pacmanHMM(game_state):
         model['observation_matrix'] = observation_matrix
            
         model['step_count'] = 0
+        model['last_ate_step'] = 0
+        model['chasefoodonly'] = 0 # variable to track whether we should chase food only to break out of local loops after eating a pellet, 
+        # which can cause the agent to get stuck in a loop between two cells if the ghost is nearby and the sensor readings are noisy.    
 
         ##visualisation
         if game_engine.VISUALISE:
@@ -423,7 +429,6 @@ def pacmanHMM(game_state):
     if game_engine.VISUALISE and game_state['pacman']['model']['step_count'] % 100 == 0 and 'ax_n' in game_state['pacman']['model']:    
         visualise_belief_number(vector_to_matrix(game_state['pacman']['model']['belief'],game_state['grid_size'],game_state['valid_positions']),game_state['pacman']['model']['ax_n'])
         
-        
     #TODO: Use the updated belief in a reactive agent to move Pac-Man
     #replace this line by your own implementation   
     # for a simple reactive agent, you can compute the most likely position of the ghost based on the belief
@@ -435,13 +440,19 @@ def pacmanHMM(game_state):
 
     # get pacman's current position from game-state coordinates
     pacman_pos = (game_state['pacman']['x'], game_state['pacman']['y'])
+
+    pacman = game_state['pacman']
+
     # check distance between pacman and the most likely ghost position
     distance = game_engine.manhattan_distance(pacman_pos, most_likely_ghost_pos)
     # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
-    if distance > 5:
+    if distance > 5 or game_state['pacman']['model']['chasefoodonly'] > 0: # if the ghost is far away, move towards food (if we have not eaten in a while) or randomly (if we have eaten recently), to break out of local loops.
         #random_walk(game_state['pacman'], game_state)
         #print("Pacman is far from the most likely ghost position.")
         pacman_reactive_agent_no_random_legal(game_state)
+        #if(game_state['pacman']['model']['chasefoodonly'] > 0):
+        #    print(f"Chasing food only for {game_state['pacman']['model']['chasefoodonly']} more steps.")
+        game_state['pacman']['model']['chasefoodonly'] = game_state['pacman']['model']['chasefoodonly'] - 1 if game_state['pacman']['model']['chasefoodonly'] > 0 else 0
         #pacman_reactive_agent_no_random_legal_chaseghosts(game_state)
     else:
         # Using only perceptions move in the direction that increases the distance from the most likely ghost position. 
@@ -458,23 +469,27 @@ def pacmanHMM(game_state):
                 game_state['pacman']['direction'] = 'down'
             else:
                 #random_walk(game_state['pacman'], game_state)
+                pacman_reactive_agent_no_random_legal(game_state)              
+        else: # if we have not eaten in 50 or more steps then we will switch to food chasing mode to break out of local loops.
+            # if last time I ate was more than 50 steps ago, then I will try to chase food instead of running away from the ghost, to break out of local loops.
+            if game_state['pacman']['model']['last_ate_step'] >= 50:
+                game_state['pacman']['model']['last_ate_step'] = 0
+                game_state['pacman']['model']['chasefoodonly'] = 10 # for the next 10 steps, we will chase food regardless of ghost positions, to try to break out of local loops.
+                #print("Pacman has not eaten in 50 steps, switching to food chasing mode.")
                 pacman_reactive_agent_no_random_legal(game_state)
-                
-        else:
-            if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
-                game_state['pacman']['direction'] = 'right'
-            elif most_likely_ghost_pos[0] > pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
-                game_state['pacman']['direction'] = 'left'
-            elif most_likely_ghost_pos[1] < pacman_pos[1] and not pacman_perceptions.wall_down(game_state):
-                game_state['pacman']['direction'] = 'down'
-            elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_up(game_state):
-                game_state['pacman']['direction'] = 'up'
             else:
-                #random_walk(game_state['pacman'], game_state)
-                pacman_reactive_agent_no_random_legal(game_state)
-
-        
-
+                game_state['pacman']['model']['last_ate_step'] += 1
+                if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
+                    game_state['pacman']['direction'] = 'right'
+                elif most_likely_ghost_pos[0] > pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
+                    game_state['pacman']['direction'] = 'left'
+                elif most_likely_ghost_pos[1] < pacman_pos[1] and not pacman_perceptions.wall_down(game_state):
+                    game_state['pacman']['direction'] = 'down'
+                elif most_likely_ghost_pos[1] > pacman_pos[1] and not pacman_perceptions.wall_up(game_state):
+                    game_state['pacman']['direction'] = 'up'
+                else:
+                    #random_walk(game_state['pacman'], game_state)
+                    pacman_reactive_agent_no_random_legal(game_state)
 
     #random_walk(game_state['pacman'], game_state)
             
