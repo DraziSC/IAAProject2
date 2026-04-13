@@ -450,15 +450,23 @@ def pacmanHMM(game_state):
     # use new perception to get distance 
     distance = pacman_perceptions.pacman_distance_to_ghost(game_state, most_likely_ghost_pos)
 
-    pacmanGhostsHMM(game_state) # update the ghost belief using the HMM before making a decision, to ensure we are using the most up-to-date information about the ghost's position.
-    prob_frightened = game_state['pacman']['gmodel']['gbelief'][1]
-    prob_active = game_state['pacman']['gmodel']['gbelief'][0]
+    USE_BONUS_HMM = True 
+    chase_frozen = False # variable to track whether we are currently in chase mode due to perceiving a frightened ghost, which will cause us to ignore the most likely ghost position and move towards it instead of away from it, even if the belief is not very strong, since we want to try to chase the frightened ghost while we can. This is a simple way to add some risk-taking behaviour to try to increase score, which can be turned on or off with the USE_BONUS_HMM variable. 
 
-    # proint probability of ghost being active vs frightened for debugging and analysis
-    #if(prob_frightened > 0.5):
-    #    print(f"Ghost is likely frightened with probability {prob_frightened:.2f}.")
-    #print(f"Probability of ghost being active: {prob_active:.2f}, Probability of ghost being frightened: {prob_frightened:.2f}, Distance to most likely ghost position: {distance}")
+    if USE_BONUS_HMM:
+        pacmanGhostsHMM(game_state) # update the ghost belief using the HMM before making a decision, to ensure we are using the most up-to-date information about the ghost's position.
+        prob_frightened = game_state['pacman']['gmodel']['gbelief'][1]
+        prob_active = game_state['pacman']['gmodel']['gbelief'][0]
 
+        # proint probability of ghost being active vs frightened for debugging and analysis
+        if(prob_frightened > 0.5):
+            #print(f"Ghost is likely frightened with probability {prob_frightened:.2f}.")
+        #print(f"Probability of ghost being active: {prob_active:.2f}, Probability of ghost being frightened: {prob_frightened:.2f}, Distance to most likely ghost position: {distance}")
+            chase_frozen = True
+    else:
+        if pacman_perceptions.ghost_frightened(game_state):
+            chase_frozen = True 
+        
     # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
     if distance > 5 or game_state['pacman']['model']['chasefoodonly'] > 0: # if the ghost is far away, move towards food (if we have not eaten in a while) or randomly (if we have eaten recently), to break out of local loops.
         #random_walk(game_state['pacman'], game_state)
@@ -472,7 +480,7 @@ def pacmanHMM(game_state):
         # Using only perceptions move in the direction that increases the distance from the most likely ghost position. 
         # You cannot use the get_valid_directions or compute_new_pos functions from the game engine.
         # if ghost_frightened move towards ghost instead of away, using the same logic but in reverse (i.e., move in the direction that minimizes the distance to the ghost).
-        if(prob_frightened > 0.5):
+        if(chase_frozen):
         #if pacman_perceptions.ghost_frightened(game_state):
             if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
                 game_state['pacman']['direction'] = 'left'  
@@ -536,11 +544,12 @@ def pacmanGhostsHMM(game_state):
         gmodel = {}
 
         # states: 0 = not frightened, 1 = frightened
-        gmodel['gbelief'] = np.array([0.5, 0.5])
+        # at start of game the ghost cannot be frightened so we can initialise the belief with a strong prior on the ghost being active.  
+        gmodel['gbelief'] = np.array([1.0, 0.0])
 
         # transition matrix: models the probability of the ghost switching between active and frightened states. For simplicity, 
         # we can assume a small probability of switching states at each time step, which can be tuned for better performance.
-        switch_prob = 0.1
+        switch_prob = 0.05
 
         # transition matrix should be of size (num_states, num_states) where each entry T[s][s'] = P(X_{t+1} = s' | X_t = s) is the probability of
         #  transitioning from state s to state s' according to the ghost's state transition model. In this case we have 2 states (active and frightened) 

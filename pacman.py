@@ -3,6 +3,10 @@ import game_engine
 import agents
 import numpy as np
 import random
+import os
+
+# Headless mode avoids opening many windows when benchmarking in parallel.
+os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 
 if __name__ == "__main__":
     #ghost order: 'Blinky', 'Pinky', 'Inky', 'Clyde'
