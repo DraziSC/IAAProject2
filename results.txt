@@ -1,0 +1,48 @@
+Using HMM for ghost frightened.
+
+Overall scores for all experiments:
+{'ghost_true_prob': 0.1, 'ghost_policy': 'inky_agent', 'average_score': np.float64(223.18), 'max_score': np.float64(279.0), 'min_score': np.float64(68.0), 'wins': 14}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(179.02), 'max_score': np.float64(275.0), 'min_score': np.float64(37.0), 'wins': 2}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(196.76), 'max_score': np.float64(287.0), 'min_score': np.float64(37.0), 'wins': 6}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(200.37), 'max_score': np.float64(289.0), 'min_score': np.float64(59.0), 'wins': 1}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'inky_agent', 'average_score': np.float64(236.11), 'max_score': np.float64(289.0), 'min_score': np.float64(85.0), 'wins': 30}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(156.88), 'max_score': np.float64(285.0), 'min_score': np.float64(62.0), 'wins': 0}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(180.35), 'max_score': np.float64(281.0), 'min_score': np.float64(64.0), 'wins': 5}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(191.08), 'max_score': np.float64(289.0), 'min_score': np.float64(52.0), 'wins': 4}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'inky_agent', 'average_score': np.float64(251.12), 'max_score': np.float64(288.0), 'min_score': np.float64(87.0), 'wins': 49}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(179.28), 'max_score': np.float64(289.0), 'min_score': np.float64(64.0), 'wins': 1}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(196.81), 'max_score': np.float64(284.0), 'min_score': np.float64(64.0), 'wins': 2}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(229.5), 'max_score': np.float64(289.0), 'min_score': np.float64(68.0), 'wins': 7}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'inky_agent', 'average_score': np.float64(259.98), 'max_score': np.float64(289.0), 'min_score': np.float64(128.0), 'wins': 54}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(189.79), 'max_score': np.float64(284.0), 'min_score': np.float64(66.0), 'wins': 1}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(201.89), 'max_score': np.float64(287.0), 'min_score': np.float64(66.0), 'wins': 0}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(229.63), 'max_score': np.float64(289.0), 'min_score': np.float64(72.0), 'wins': 6}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'inky_agent', 'average_score': np.float64(250.23), 'max_score': np.float64(289.0), 'min_score': np.float64(22.0), 'wins': 60}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(200.69), 'max_score': np.float64(289.0), 'min_score': np.float64(66.0), 'wins': 1}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(208.32), 'max_score': np.float64(287.0), 'min_score': np.float64(66.0), 'wins': 1}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(238.73), 'max_score': np.float64(289.0), 'min_score': np.float64(66.0), 'wins': 13}
+
+
+not using HMM for ghost frightened.
+
+Overall scores for all experiments:
+{'ghost_true_prob': 0.1, 'ghost_policy': 'inky_agent', 'average_score': np.float64(226.31), 'max_score': np.float64(279.0), 'min_score': np.float64(47.0), 'wins': 20}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(175.95), 'max_score': np.float64(269.0), 'min_score': np.float64(34.0), 'wins': 2}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(189.73), 'max_score': np.float64(275.0), 'min_score': np.float64(34.0), 'wins': 2}
+{'ghost_true_prob': 0.1, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(193.83), 'max_score': np.float64(281.0), 'min_score': np.float64(34.0), 'wins': 5}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'inky_agent', 'average_score': np.float64(227.18), 'max_score': np.float64(285.0), 'min_score': np.float64(31.0), 'wins': 24}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(191.92), 'max_score': np.float64(289.0), 'min_score': np.float64(64.0), 'wins': 1}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(198.06), 'max_score': np.float64(289.0), 'min_score': np.float64(64.0), 'wins': 4}
+{'ghost_true_prob': 0.25, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(210.17), 'max_score': np.float64(289.0), 'min_score': np.float64(62.0), 'wins': 7}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'inky_agent', 'average_score': np.float64(252.53), 'max_score': np.float64(279.0), 'min_score': np.float64(86.0), 'wins': 48}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(210.72), 'max_score': np.float64(289.0), 'min_score': np.float64(72.0), 'wins': 6}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(221.65), 'max_score': np.float64(289.0), 'min_score': np.float64(41.0), 'wins': 6}
+{'ghost_true_prob': 0.5, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(239.84), 'max_score': np.float64(283.0), 'min_score': np.float64(72.0), 'wins': 8}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'inky_agent', 'average_score': np.float64(255.08), 'max_score': np.float64(279.0), 'min_score': np.float64(55.0), 'wins': 63}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(245.87), 'max_score': np.float64(289.0), 'min_score': np.float64(72.0), 'wins': 24}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(244.34), 'max_score': np.float64(289.0), 'min_score': np.float64(72.0), 'wins': 16}
+{'ghost_true_prob': 0.75, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(254.75), 'max_score': np.float64(289.0), 'min_score': np.float64(116.0), 'wins': 17}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'inky_agent', 'average_score': np.float64(265.06), 'max_score': np.float64(289.0), 'min_score': np.float64(241.0), 'wins': 70}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'blinky_agent', 'average_score': np.float64(263.55), 'max_score': np.float64(289.0), 'min_score': np.float64(120.0), 'wins': 15}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'pinky_agent', 'average_score': np.float64(263.16), 'max_score': np.float64(289.0), 'min_score': np.float64(120.0), 'wins': 11}
+{'ghost_true_prob': 0.9, 'ghost_policy': 'clyde_agent', 'average_score': np.float64(262.21), 'max_score': np.float64(289.0), 'min_score': np.float64(123.0), 'wins': 19}
