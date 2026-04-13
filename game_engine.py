@@ -275,7 +275,7 @@ def main(pacman_policy, ghost_policies, frightened_ghost_policies, map_file = "o
 
 
     # Locate Pac-Man's starting position
-    pacman = {'x':1, 'y':1, 'previous_direction': None, 'direction' : None , 'next_direction' : None, 'image':None, 'model':None, 'ghost_true_prob':ghost_true_prob}  # Default position if not found in map
+    pacman = {'x':1, 'y':1, 'previous_direction': None, 'direction' : None , 'next_direction' : None, 'image':None, 'model':None, 'ghost_true_prob':ghost_true_prob, 'gmodel':None }  # Default position if not found in map
     ghosts = []
     ghost_names = ['Blinky', 'Pinky', 'Inky', 'Clyde']
     for y in range(grid_size[1]):

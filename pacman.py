@@ -21,6 +21,7 @@ if __name__ == "__main__":
     #ghost_true_prob_array = [0.9] 
 
     ghost_policies_full = [agents.inky_agent, agents.blinky_agent, agents.pinky_agent, agents.clyde_agent]
+    #ghost_policies_full = [agents.inky_agent]
 
     n_experiments = 100
     seed = 42

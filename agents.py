@@ -450,6 +450,15 @@ def pacmanHMM(game_state):
     # use new perception to get distance 
     distance = pacman_perceptions.pacman_distance_to_ghost(game_state, most_likely_ghost_pos)
 
+    pacmanGhostsHMM(game_state) # update the ghost belief using the HMM before making a decision, to ensure we are using the most up-to-date information about the ghost's position.
+    prob_frightened = game_state['pacman']['gmodel']['gbelief'][1]
+    prob_active = game_state['pacman']['gmodel']['gbelief'][0]
+
+    # proint probability of ghost being active vs frightened for debugging and analysis
+    #if(prob_frightened > 0.5):
+    #    print(f"Ghost is likely frightened with probability {prob_frightened:.2f}.")
+    #print(f"Probability of ghost being active: {prob_active:.2f}, Probability of ghost being frightened: {prob_frightened:.2f}, Distance to most likely ghost position: {distance}")
+
     # if the ghost is far away, move randomly, otherwise move away from the most likely ghost position
     if distance > 5 or game_state['pacman']['model']['chasefoodonly'] > 0: # if the ghost is far away, move towards food (if we have not eaten in a while) or randomly (if we have eaten recently), to break out of local loops.
         #random_walk(game_state['pacman'], game_state)
@@ -463,7 +472,8 @@ def pacmanHMM(game_state):
         # Using only perceptions move in the direction that increases the distance from the most likely ghost position. 
         # You cannot use the get_valid_directions or compute_new_pos functions from the game engine.
         # if ghost_frightened move towards ghost instead of away, using the same logic but in reverse (i.e., move in the direction that minimizes the distance to the ghost).
-        if pacman_perceptions.ghost_frightened(game_state):
+        if(prob_frightened > 0.5):
+        #if pacman_perceptions.ghost_frightened(game_state):
             if most_likely_ghost_pos[0] < pacman_pos[0] and not pacman_perceptions.wall_left(game_state):
                 game_state['pacman']['direction'] = 'left'  
             elif most_likely_ghost_pos[0] > pacman_pos[0] and not pacman_perceptions.wall_right(game_state):
@@ -500,5 +510,72 @@ def pacmanHMM(game_state):
             
             
 
-    
+def bayesian_filter_binary(observation, gmodel):
+    # This function implements a simplified version of the Bayesian filter for a binary state space, where the ghost can be in one of two states: 
+    # active (not frightened) or frightened.
+    # The belief is represented as a 2D vector where gbelief[0] is the probability of the ghost being active and gbelief[1] is the probability of the ghost 
+    # being frightened.
+    predicted_gbelief = np.dot(gmodel['transition_matrix'].T, gmodel['gbelief'])
+
+    # the observation is binary, where 0 represents the sensor indicating the ghost is active and 1 represents the sensor indicating the ghost is frightened.
+    observation_probabilities = gmodel['observation_matrix'][observation]
+
+    # the update step multiplies the predicted belief by the observation probabilities for the given observation, and then normalizes the result 
+    # to get the updated belief.
+    updated_gbelief = observation_probabilities * predicted_gbelief
+    updated_gbelief = updated_gbelief / np.sum(updated_gbelief)
+    # update the belief in the model with the new belief after incorporating the observation and the prediction based on the transition model.
+    gmodel['gbelief'] = updated_gbelief
+
+# this is the bonus part of the assignment, which is not required but can be attempted for extra credit. 
+# It implements a separate HMM to track the ghost's state (active vs frightened) based on noisy sensor readings of whether the ghost appears 
+# frightened or not. The belief about the ghost's state can then be used in the pacmanHMM agent to make more informed decisions about whether to chase 
+# the ghost (if it is likely frightened) or run away from it (if it is likely active).
+def pacmanGhostsHMM(game_state):
+    if game_state['pacman']['gmodel'] is None:
+        gmodel = {}
+
+        # states: 0 = not frightened, 1 = frightened
+        gmodel['gbelief'] = np.array([0.5, 0.5])
+
+        # transition matrix: models the probability of the ghost switching between active and frightened states. For simplicity, 
+        # we can assume a small probability of switching states at each time step, which can be tuned for better performance.
+        switch_prob = 0.1
+
+        # transition matrix should be of size (num_states, num_states) where each entry T[s][s'] = P(X_{t+1} = s' | X_t = s) is the probability of
+        #  transitioning from state s to state s' according to the ghost's state transition model. In this case we have 2 states (active and frightened) 
+        # and we assume that the ghost can switch between these states with a certain probability at each time step, which is represented in the transition matrix.  
+        gmodel['transition_matrix'] = np.array([
+            [1 - switch_prob, switch_prob],
+            [switch_prob, 1 - switch_prob]
+        ])
+
+        p = 0.9 # default sensor accuracy, can be tuned for better performance
+
+        # observations: 0 = sensor says not frightened, 1 = sensor says frightened
+        # observation matrix should be of size (num_observations, num_states) 
+        # where each entry E[o][s] = P(O_t = o | X_t = s) models the likelihood of the sensor reading given the ghost's state.  
+        gmodel['observation_matrix'] = np.array([
+            [p, 1 - p],
+            [1 - p, p]
+        ])
+
+        game_state['pacman']['gmodel'] = gmodel
+
+    true_state = pacman_perceptions.ghost_frightened(game_state)
+
+    #for now just use default value for true_prob in the noisy_sensor function, which is 0.8 for correct readings and 0.2 for incorrect readings, 
+    # to simplify the implementation and focus on testing the HMM logic.
+    sensor_reading = pacman_perceptions.noisy_sensor(
+        true_state
+    )
+
+    observation = 1 if sensor_reading else 0
+
+    bayesian_filter_binary(observation, game_state['pacman']['gmodel'])
+
+    prob_active = game_state['pacman']['gmodel']['gbelief'][0]
+    prob_frightened = game_state['pacman']['gmodel']['gbelief'][1]
+
+    #print(f"Ghost-state belief active: {prob_active:.2f}, frightened: {prob_frightened:.2f}")    
     
